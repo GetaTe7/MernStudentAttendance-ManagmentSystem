@@ -20,7 +20,9 @@ const Login = () => {
             if (isLogin) {
                 await login(email, password);
             } else {
-                await register({ name, email, password, role, studentId });
+                const userData = { name, email, password, role };
+                if (role === 'student') userData.studentId = studentId;
+                await register(userData);
             }
             navigate('/dashboard');
         } catch (err) {
@@ -101,7 +103,9 @@ const Login = () => {
                                     exit={{ height: 0, opacity: 0 }}
                                     className="overflow-hidden"
                                 >
-                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Full Name</label>
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                        {role === 'lecturer' ? 'Lecturer Full Name' : 'Student Full Name'}
+                                    </label>
                                     <div className="relative">
                                         <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                         <input

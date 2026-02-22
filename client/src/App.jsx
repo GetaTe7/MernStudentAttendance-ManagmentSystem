@@ -6,6 +6,9 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Attendance from './pages/Attendance';
 import Analytics from './pages/Analytics';
+import UserManagement from './pages/UserManagement';
+import CourseManagement from './pages/CourseManagement';
+import SystemReports from './pages/SystemReports';
 import './index.css';
 
 const ProtectedRoute = ({ children, roles }) => {
@@ -46,6 +49,30 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Analytics />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute roles={['admin']}>
+                  <UserManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/courses"
+              element={
+                <ProtectedRoute roles={['admin']}>
+                  <CourseManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/reports"
+              element={
+                <ProtectedRoute roles={['admin']}>
+                  <SystemReports />
                 </ProtectedRoute>
               }
             />

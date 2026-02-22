@@ -40,3 +40,15 @@ exports.enrollStudent = async (req, res, next) => {
         next(err);
     }
 };
+// @desc    Get students enrolled in a course
+// @route   GET /api/courses/:courseId/students
+// @access  Private (Lecturer/Admin)
+exports.getEnrolledStudents = async (req, res, next) => {
+    try {
+        const enrollments = await Enrollment.find({ course: req.params.courseId }).populate('student');
+        const students = enrollments.map(e => e.student);
+        res.json({ success: true, students });
+    } catch (err) {
+        next(err);
+    }
+};

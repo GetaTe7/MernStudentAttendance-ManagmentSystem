@@ -21,15 +21,25 @@ const userSchema = new mongoose.Schema({
     }]
 }, { timestamps: true });
 
-// Hash password before saving
+// Async hook - No callback 'next' required for async functions in Mongoose 5.x/6.x/7.x/8.x
 userSchema.pre('save', async function () {
     if (!this.isModified('password')) return;
-    this.password = await bcrypt.hash(this.password, 10);
+
+    try {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+    } catch (err) {
+        throw err;
+    }
 });
 
 // Method to compare password
 userSchema.methods.comparePassword = async function (candidatePassword) {
-    return await bcrypt.compare(candidatePassword, this.password);
+    try {
+        return await bcrypt.compare(candidatePassword, this.password);
+    } catch (err) {
+        return false;
+    }
 };
 
 module.exports = mongoose.model('User', userSchema);

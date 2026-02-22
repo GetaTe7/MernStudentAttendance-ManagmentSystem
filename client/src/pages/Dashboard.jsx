@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 import { useTheme } from '../context/ThemeContext';
 import { io } from 'socket.io-client';
 import {
@@ -16,41 +18,68 @@ import {
 
 const Dashboard = () => {
     const { user, logout } = useAuth();
+    const navigate = useNavigate();
     const { isDark, toggleTheme } = useTheme();
     const [socket, setSocket] = useState(null);
     const [stats, setStats] = useState({ present: 88, total: 48, attended: 42 });
 
     useEffect(() => {
-        const newSocket = io('http://localhost:5000');
+        const newSocket = io();
         setSocket(newSocket);
 
         newSocket.on('attendanceUpdate', (data) => {
-            // Real-time update logic
             console.log('Real-time update received:', data);
+            fetchStats();
         });
 
+        if (user) fetchStats();
+
         return () => newSocket.close();
-    }, []);
+    }, [user]);
+
+    const fetchStats = async () => {
+        try {
+            if (user.role === 'student') {
+                const res = await axios.get(`/api/attendance/student/${user.id}`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                });
+                const total = res.data.stats.length;
+                const attended = res.data.stats.filter(s => s.status === 'present').length;
+                setStats({
+                    total,
+                    attended,
+                    present: total > 0 ? Math.round((attended / total) * 100) : 0
+                });
+            } else if (user.role === 'lecturer' || user.role === 'admin') {
+                const res = await axios.get('/api/courses', {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                });
+                setStats(prev => ({ ...prev, courseCount: res.data.courses.length }));
+            }
+        } catch (err) {
+            console.error('Error fetching dashboard stats', err);
+        }
+    };
 
     const AdminView = () => (
         <div className="space-y-6">
             <h2 className="text-2xl font-bold dark:text-white">Admin Controls</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+                <Link to="/admin/users" className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-lg hover:border-blue-200 transition-all active:scale-[0.98]">
                     <Users className="w-10 h-10 text-blue-500 mb-4" />
                     <h3 className="font-semibold text-lg dark:text-white">Manage Users</h3>
                     <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Add or remove students and lecturers</p>
-                </div>
-                <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+                </Link>
+                <Link to="/admin/courses" className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-lg hover:border-emerald-200 transition-all active:scale-[0.98]">
                     <BookOpen className="w-10 h-10 text-emerald-500 mb-4" />
                     <h3 className="font-semibold text-lg dark:text-white">Manage Courses</h3>
                     <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Configure classes and assignments</p>
-                </div>
-                <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+                </Link>
+                <Link to="/admin/reports" className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-lg hover:border-purple-200 transition-all active:scale-[0.98]">
                     <BarChart2 className="w-10 h-10 text-purple-500 mb-4" />
                     <h3 className="font-semibold text-lg dark:text-white">System Reports</h3>
                     <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">View overall attendance analytics</p>
-                </div>
+                </Link>
             </div>
         </div>
     );
@@ -59,16 +88,16 @@ const Dashboard = () => {
         <div className="space-y-6">
             <h2 className="text-2xl font-bold dark:text-white">Lecturer Dashboard</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-blue-100 dark:border-blue-900 shadow-sm bg-blue-50/50 dark:bg-blue-900/20">
+                <Link to="/attendance" className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-blue-100 dark:border-blue-900 shadow-sm bg-blue-50/50 dark:bg-blue-900/20 hover:shadow-lg transition-all active:scale-[0.98]">
                     <CheckCircle className="w-10 h-10 text-blue-600 dark:text-blue-400 mb-4" />
                     <h3 className="font-semibold text-lg dark:text-white">Take Attendance</h3>
                     <p className="text-slate-600 dark:text-slate-300 text-sm mt-1">Record presence for current sessions</p>
-                </div>
-                <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+                </Link>
+                <Link to="/analytics" className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-lg transition-all active:scale-[0.98]">
                     <BarChart2 className="w-10 h-10 text-indigo-500 mb-4" />
                     <h3 className="font-semibold text-lg dark:text-white">Class Performance</h3>
                     <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Analyze attendance trends for your courses</p>
-                </div>
+                </Link>
             </div>
         </div>
     );
@@ -107,14 +136,14 @@ const Dashboard = () => {
                 </div>
 
                 <nav className="space-y-2 flex-1">
-                    <div className="p-3 bg-blue-600 rounded-xl flex items-center space-x-3 cursor-pointer">
+                    <Link to="/dashboard" className="p-3 bg-blue-600 rounded-xl flex items-center space-x-3 cursor-pointer">
                         <LayoutDashboard className="w-5 h-5" />
                         <span className="font-medium">Dashboard</span>
-                    </div>
-                    <div className="p-3 hover:bg-slate-800 rounded-xl flex items-center space-x-3 cursor-pointer text-slate-400 hover:text-white transition-all">
+                    </Link>
+                    <Link to="/analytics" className="p-3 hover:bg-slate-800 rounded-xl flex items-center space-x-3 cursor-pointer text-slate-400 hover:text-white transition-all">
                         <BarChart2 className="w-5 h-5" />
                         <span className="font-medium">Analytics</span>
-                    </div>
+                    </Link>
                 </nav>
 
                 <div className="space-y-4">

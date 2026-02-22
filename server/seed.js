@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const User = require('./models/User');
 const Department = require('./models/Department');
 const Course = require('./models/Course');
+const Enrollment = require('./models/Enrollment');
 const fs = require('fs');
 require('dotenv').config();
 
@@ -14,6 +15,7 @@ const seedData = async () => {
         await User.deleteMany({});
         await Department.deleteMany({});
         await Course.deleteMany({});
+        await Enrollment.deleteMany({});
 
         // Create Department
         const dept = await Department.create({
@@ -30,9 +32,6 @@ const seedData = async () => {
             password: 'password123',
             role: 'admin',
             department: dept._id
-        }).catch(err => {
-            console.error('Failed to create Admin:', err);
-            throw err;
         });
 
         // Create Lecturer
@@ -63,6 +62,12 @@ const seedData = async () => {
             lecturer: lecturer._id,
             semester: 'Fall',
             year: 2026
+        });
+
+        // Enroll Student
+        await Enrollment.create({
+            student: student._id,
+            course: course._id
         });
 
         console.log('Database seeded successfully!');

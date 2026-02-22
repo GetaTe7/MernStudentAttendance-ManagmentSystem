@@ -7,7 +7,7 @@ const validateUser = (data) => {
         password: Joi.string().min(6).required(),
         role: Joi.string().valid('admin', 'lecturer', 'student'),
         department: Joi.string(),
-        studentId: Joi.string()
+        studentId: Joi.string().allow('', null)
     });
     return schema.validate(data);
 };
