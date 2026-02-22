@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const User = require('./models/User');
 const Department = require('./models/Department');
 const Course = require('./models/Course');
+const fs = require('fs');
 require('dotenv').config();
 
 const seedData = async () => {
@@ -22,12 +23,16 @@ const seedData = async () => {
         });
 
         // Create Admin
+        console.log('Creating Admin User...');
         const admin = await User.create({
             name: 'Admin User',
             email: 'admin@example.com',
             password: 'password123',
             role: 'admin',
             department: dept._id
+        }).catch(err => {
+            console.error('Failed to create Admin:', err);
+            throw err;
         });
 
         // Create Lecturer
@@ -63,7 +68,8 @@ const seedData = async () => {
         console.log('Database seeded successfully!');
         process.exit();
     } catch (err) {
-        console.error('Error seeding database:', err);
+        fs.writeFileSync('seed_error.log', err.stack || err.toString());
+        console.error('Error seeding database:', err.stack || err);
         process.exit(1);
     }
 };
