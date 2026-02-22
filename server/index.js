@@ -14,9 +14,16 @@ app.use(helmet());
 app.use(morgan('dev'));
 
 // Routes
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/courses', require('./routes/courseRoutes'));
+app.use('/api/attendance', require('./routes/attendanceRoutes'));
+
 app.get('/', (req, res) => {
     res.send('Student Attendance Management System API');
 });
+
+// Error Handler
+app.use(require('./middleware/errorHandler'));
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI)
